@@ -14,6 +14,10 @@ def get_running_processes(processes: list[str]) -> list[psutil.Process]:
     are currently running.
 
     Will return list of those that are actually running.
+
+    Iterates through the system process list and matches names against the
+    provided list. To optimize performance, the scan terminates early once
+    all requested processes have been identified.
     """
 
     running_processes = []
@@ -38,6 +42,10 @@ def is_process_already_running(process_name: str):
     """
     Used to check if process with provided name already running.
     Will not consider current process if name matches.
+
+    Verifies if another instance of the specified process name is active by
+    comparing process IDs and executable paths. This ensures that only
+    instances launched from the same executable are flagged as duplicates.
     """
 
     current_pid = os.getpid()

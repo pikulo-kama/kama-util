@@ -8,6 +8,10 @@ from typing import Any
 def cleanup_directory(directory: str):
     """
     Used to delete all contents of directory.
+
+    Iterates through the specified directory and removes every file,
+    symbolic link, or subdirectory encountered. If the target directory
+    itself does not exist, the function returns immediately.
     """
 
     if not os.path.exists(directory):
@@ -31,6 +35,9 @@ def read_file(file_path: str, as_json: bool = False):
     """
     Used to read contents of the file.
     Throws exception if file doesn't exist.
+
+    Reads the raw text of a file or parses it as a JSON object if the
+    flag is set. Uses UTF-8 encoding by default.
     """
 
     if not os.path.exists(file_path):
@@ -43,6 +50,10 @@ def read_file(file_path: str, as_json: bool = False):
 def save_file(file_path: str, data: Any, as_json: bool = False, binary: bool = False):
     """
     Used to save contents of the file.
+
+    Writes data to a file. Supports standard text writing, binary
+    mode for non-text data, and JSON serialization with non-ASCII
+    characters preserved.
     """
 
     mode = "wb" if binary else "w"
@@ -59,6 +70,9 @@ def save_file(file_path: str, data: Any, as_json: bool = False, binary: bool = F
 def delete_file(file_path: str):
     """
     Used to remove file.
+
+    Silently checks if the file exists before attempting to delete it
+    to prevent errors.
     """
 
     if os.path.exists(file_path):
@@ -68,6 +82,9 @@ def delete_file(file_path: str):
 def file_checksum(file_path: str, algorithm: str = "sha256", block_size: int = 8192):
     """
     Used to get checksum of file.
+
+    Calculates a cryptographic hash of the file's contents. Reads the
+    file in chunks to ensure low memory usage even with large files.
     """
 
     file_hash = hashlib.new(algorithm)
@@ -83,6 +100,9 @@ def file_name_from_path(file_path: str):
     """
     Used to extract file name from file path.
     e.g. /path/to/file.txt -> file.txt
+
+    Identifies the last component of a path using the operating
+    system's specific path separator.
     """
 
     if os.path.sep not in file_path:
@@ -95,6 +115,9 @@ def remove_extension_from_path(file_path: str):
     """
     Used to remove file extension from file path.
     e.g. /path/to/file.txt -> /path/to/file
+
+    Truncates the string starting from the last occurrence of the
+    dot separator.
     """
 
     separator = "."

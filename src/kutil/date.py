@@ -9,6 +9,9 @@ def string_to_date(date_string: str):
     """
     Used to transform string date to actual date object.
     Uses current timezone of machine when creating date.
+
+    Converts an ISO-formatted UTC string into a localized datetime object
+    based on the system's current timezone.
     """
 
     creation_datetime_naive = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -22,6 +25,9 @@ def get_verbose_date(datetime_object: datetime, locale: str, show_year: bool = T
     """
     Used to extract date from datetime object
     and transform it to readable string.
+
+    Formats the date according to the specified locale, with an optional
+    year component.
     """
 
     date_format = "d MMMM"
@@ -36,6 +42,9 @@ def get_verbose_time(datetime_object: datetime, use_military: bool = False):
     """
     Used to extract time from datetime object
     and transform it to readable string.
+
+    Formats the time into either a standard 12-hour AM/PM string or
+    a 24-hour military format.
     """
 
     time_format = "%I:%M %p"

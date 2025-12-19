@@ -27,6 +27,10 @@ LogLevels = {
 def get_logger(logger_name: str, logback_path: str, log_target_directory: str):
     """
     Used to create logger for provided logger name.
+
+    Triggers the global logging initialization, retrieves specific
+    configurations from the logback file, and sets the appropriate
+    log level. If the level is set to 'OFF', the logger is disabled.
     """
 
     _initialize_logging(log_target_directory)
@@ -48,6 +52,9 @@ def _get_log_level(logger_name: str, logback: dict):
     """
     Used to query logback and get configured log level for provided log name.
     If log level is not configured 'INFO' would be used as default.
+
+    Maps the string level from the configuration dictionary to standard
+    logging constants defined in the LogLevels map.
     """
 
     level = logback.get(logger_name)
@@ -66,6 +73,9 @@ def _get_logback(logback_path: str):
 
     If it doesn't exist then default logback
     file would be used - logback/SaveGem.json
+
+    Utilizes an internal map to cache configuration data, preventing
+    redundant file system reads.
     """
 
     global _logback_map
@@ -80,6 +90,10 @@ def _initialize_logging(log_target_directory: str):
     """
     Used to initialize logging.
     Should be executed only once.
+
+    Sets up a TimedRotatingFileHandler with midnight rotation and
+    a retention policy of 5 backup files. Configures the root logger
+    with a standardized message format including timestamps and line numbers.
     """
 
     global _initialized

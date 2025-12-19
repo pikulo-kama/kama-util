@@ -10,6 +10,10 @@ def get_members(package: str, clazz: type):
     Used to get tuple of class name, class that
     correspond to provided type and located in
     provided package.
+
+    Iterates through all modules within the specified package path, imports
+    them dynamically, and yields classes that are subclasses of the
+    provided type (excluding the type itself).
     """
 
     for _, module_name, _ in pkgutil.iter_modules(sys.modules[package].__path__):
@@ -22,6 +26,13 @@ def get_members(package: str, clazz: type):
 
 
 def get_methods(target, name_filter: Callable[[str], bool]):
+    """
+    Used to extract methods from a target object based on a name filter.
+
+    Inspects the attributes of the target object and yields the name and
+    method reference for all members that are callable, identified as
+    methods, and pass the provided filter criteria.
+    """
 
     for name in dir(target):
         if not name_filter(name):
