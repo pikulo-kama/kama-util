@@ -51,10 +51,7 @@ def module_path_fixture(request):
         source_file_name = test_name.replace("test_", "")
 
         # Replace base package.
-        if len(path_list) > 0:
-            path_list[0] = root_package_path
-        else:
-            path_list.append(root_package_path)
+        path_list.insert(0, root_package_path)
 
         # File called 'test_init' should test __init__.py file of module,
         # so we shouldn't add it to path.

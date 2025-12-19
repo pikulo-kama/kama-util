@@ -63,7 +63,7 @@ class TestPytest:
 
         # Mocking the pytest FixtureRequest object
         mock_request = MagicMock()
-        mock_request.module.__name__ = "tests.utils.test_date"
+        mock_request.module.__name__ = "utils.test_date"
 
         # Get the inner function
         get_path_fn = module_path_fixture(mock_request)
