@@ -1,5 +1,11 @@
 [project]
 name = "kama-util"
+license = {file = "LICENSE"}
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+]
 version = "0.1.0"
 dependencies = [
     "pytz >= 2025.2, < 2026.0",
