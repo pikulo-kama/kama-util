@@ -1,4 +1,5 @@
 import logging
+from unittest.mock import call
 
 import pytest
 from pytest_mock import MockerFixture
@@ -42,28 +43,15 @@ class TestLogger:
         module = _setup_module
 
         # Reset module globals
-        module._logback = None
+        module._logback = {}
         module._initialized = False
 
-        # Clear handlers from the root logger for consistent testing of _initialize_logging
+        # Clear handlers from the root logger for consistent testing of initialize_logging
         root_logger = logging.getLogger()
         for handler in root_logger.handlers[:]:
             root_logger.removeHandler(handler)
 
         yield module
-
-    def test_get_logback_caching(self, _logger_module, read_file_mock):
-        """
-        Tests that logback is only read from the file system once.
-        """
-
-        read_file_mock.return_value = {"ROOT": "INFO"}
-
-        _logger_module._get_logback('app')
-        _logger_module._get_logback('app')
-
-        read_file_mock.assert_called_once()
-
 
     @pytest.mark.parametrize("log_name, configured_level, expected_level", [
         ("com.app.worker", "DEBUG", logging.DEBUG),
@@ -97,14 +85,23 @@ class TestLogger:
 
 
     def test_initialize_logging_first_call(self, module_patch, _logger_module, _logging_mock, _file_handler_mock,
-                                           path_join_mock):
+                                           path_join_mock, read_file_mock):
         """
         Tests that logging is initialized correctly on the first call, setting up the root logger.
         """
 
-        module_patch("logging.Formatter")
+        logback_path = "/path/to/logback"
+        logback = {"com.test.file": "INFO"}
 
-        _logger_module._initialize_logging("target")
+        module_patch("logging.Formatter")
+        read_file_mock.return_value = logback
+
+        assert len(_logger_module._logback) == 0
+
+        _logger_module.initialize_logging("target", logback_path)
+
+        read_file_mock.assert_called_once_with(logback_path, as_json=True)
+        assert _logger_module._logback == logback
 
         # 1. Check TimedRotatingFileHandler creation
         _file_handler_mock.assert_called_once_with(
@@ -134,26 +131,29 @@ class TestLogger:
         _logger_module._initialized = True
 
         # Execute again
-        _logger_module._initialize_logging("target")
+        _logger_module.initialize_logging("target", "path")
 
         # Assertions: Should not call the handler constructor
         _file_handler_mock.assert_not_called()
 
+    def test_initialize_logging_removes_handlers(self, mocker: MockerFixture, _logger_module, _logging_mock,
+                                                 read_file_mock, _file_handler_mock):
 
-    def test_get_logger_initializes_logging(self, module_patch, _logger_module, mocker):
-        """
-        Tests that get_logger calls _initialize_logging.
-        """
+        root_logger = _logging_mock.getLogger.return_value
+        handler1 = mocker.MagicMock()
+        handler2 = mocker.MagicMock()
 
-        initialize_logging_mock = module_patch('_initialize_logging')
+        root_logger.handlers = [handler1, handler2]
 
-        # Mock dependencies to avoid full setup
-        mocker.patch.object(_logger_module, "_get_log_level", return_value=logging.INFO)
-        mocker.patch.object(_logger_module, "_get_logback", return_value={})
+        _logger_module.initialize_logging("target", "path")
 
-        _logger_module.get_logger("test_logger", "test", "target")
+        root_logger.removeHandler.assert_has_calls([
+            call(handler1),
+            call(handler2),
+        ])
 
-        initialize_logging_mock.assert_called_once()
+        handler1.close.assert_called_once()
+        handler2.close.assert_called_once()
 
 
     def test_get_logger_level_configured(self, _logger_module, mocker, _logging_mock):
@@ -164,11 +164,10 @@ class TestLogger:
         mock_logger = _logging_mock.getLogger.return_value
         mock_logger.disabled = False
 
-        mocker.patch.object(_logger_module, "_initialize_logging")
+        mocker.patch.object(_logger_module, "initialize_logging")
         mocker.patch.object(_logger_module, "_get_log_level", return_value=logging.DEBUG)
-        mocker.patch.object(_logger_module, "_get_logback", return_value={})
 
-        logger = _logger_module.get_logger("test_logger_debug", "test", "target")
+        logger = _logger_module.get_logger("test_logger_debug")
 
         assert logger is mock_logger
         _logging_mock.getLogger.assert_called_with("test_logger_debug")
@@ -181,11 +180,10 @@ class TestLogger:
         Tests logger returned with 'OFF' level is disabled.
         """
 
-        mocker.patch.object(_logger_module, '_initialize_logging')
+        mocker.patch.object(_logger_module, 'initialize_logging')
         mocker.patch.object(_logger_module, '_get_log_level', return_value=_logger_module.OFF_LOG_LEVEL)
-        mocker.patch.object(_logger_module, "_get_logback", return_value={})
 
-        logger = _logger_module.get_logger("test_logger_off", "test", "target")
+        logger = _logger_module.get_logger("test_logger_off")
         get_logger_mock = _logging_mock.getLogger.return_value
 
         assert logger is get_logger_mock

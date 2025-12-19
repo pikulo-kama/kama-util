@@ -2,7 +2,7 @@ import os
 import sys
 import psutil
 
-from kutil._logger import get_logger
+from kutil.logger import get_logger
 
 
 _logger = get_logger(__name__)
