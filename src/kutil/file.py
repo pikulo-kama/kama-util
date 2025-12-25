@@ -2,6 +2,8 @@ import hashlib
 import json
 import os.path
 import shutil
+import sys
+from pathlib import Path
 from typing import Any
 
 
@@ -126,3 +128,32 @@ def remove_extension_from_path(file_path: str):
         return file_path
 
     return file_path[0:file_path.rindex(separator)]
+
+
+def get_runtime_root() -> Path:
+    """
+    Returns the root directory of the application.
+    Works for:
+    1. Standard Python scripts (searching for markers).
+    2. Compiled .exe files (PyInstaller/Nuitka).
+    """
+
+    # 1. Check if the app is running as a compiled bundle (.exe)
+    if getattr(sys, "frozen", False):
+        # If frozen, sys.executable is the path to the actual .exe file
+        return Path(sys.executable).parent
+
+    # 2. If running as a normal script, use the marker-based search
+    # Starting from the script entry point
+    start_path = Path(sys.argv[0]).resolve()
+    if not start_path.exists():
+        start_path = Path.cwd().resolve()
+
+    root_markers = {".git", "pyproject.toml", "requirements.txt", ".root"}
+
+    for parent in [start_path] + list(start_path.parents):
+        if any((parent / marker).exists() for marker in root_markers):
+            return parent
+
+    # Fallback to current working directory
+    return Path.cwd().resolve()
