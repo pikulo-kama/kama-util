@@ -152,8 +152,11 @@ def get_runtime_root() -> Path:
     root_markers = {".git", "pyproject.toml", "requirements.txt", ".root"}
 
     for parent in [start_path] + list(start_path.parents):
-        if any((parent / marker).exists() for marker in root_markers):
-            return parent
+        for marker in root_markers:
+            marker_path = parent / marker
+
+            if marker_path.exists():
+                return parent
 
     # Fallback to current working directory
     return Path.cwd().resolve()

@@ -1,7 +1,6 @@
 import importlib
 import inspect
 import pkgutil
-import sys
 from typing import Callable
 
 
@@ -16,7 +15,12 @@ def get_members(package: str, clazz: type):
     provided type (excluding the type itself).
     """
 
-    for _, module_name, _ in pkgutil.iter_modules(sys.modules[package].__path__):
+    spec = importlib.util.find_spec(package)  # noqa
+
+    if not spec or not spec.submodule_search_locations:
+        return
+
+    for _, module_name, _ in pkgutil.walk_packages(spec.submodule_search_locations):
         module = importlib.import_module(f"{package}.{module_name}")
 
         for member_name, member in inspect.getmembers(module, inspect.isclass):
