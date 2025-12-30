@@ -6,7 +6,7 @@ from logging import NullHandler
 from logging.handlers import TimedRotatingFileHandler
 
 from kutil.file import remove_extension_from_path, read_file
-from kutil.file_extension import LOG
+from kutil.file_type import LOG
 
 # Name of running service/EXE
 _log_file_name = remove_extension_from_path(os.path.basename(sys.argv[0]))
@@ -86,7 +86,7 @@ def initialize_logging(log_target_directory: str, logback_path: str):
     _logback = read_file(logback_path, as_json=True)
 
     handler = TimedRotatingFileHandler(
-        os.path.join(log_target_directory, LOG.add_to(_log_file_name)),
+        os.path.join(log_target_directory, LOG.add_extension(_log_file_name)),
         when="midnight",
         interval=1,
         backupCount=5,
