@@ -11,7 +11,6 @@ from kutil.file_type import LOG
 # Name of running service/EXE
 _log_file_name = remove_extension_from_path(os.path.basename(sys.argv[0]))
 _logback: dict[str, str] = {}
-_initialized: bool = False
 
 
 OFF_LOG_LEVEL = "OFF"
@@ -78,14 +77,12 @@ def initialize_logging(log_target_directory: str, logback_path: str):
     with a standardized message format including timestamps and line numbers.
     """
 
-    global _initialized, _logback
+    global _logback
 
-    if _initialized:
-        return
+    if os.path.exists(logback_path):
+        _logback = read_file(logback_path, as_json=True)
 
-    _logback = read_file(logback_path, as_json=True)
-
-    handler = TimedRotatingFileHandler(
+    log_handler = TimedRotatingFileHandler(
         os.path.join(log_target_directory, LOG.add_extension(_log_file_name)),
         when="midnight",
         interval=1,
@@ -93,9 +90,9 @@ def initialize_logging(log_target_directory: str, logback_path: str):
         encoding="utf-8"
     )
 
-    handler.suffix = "%Y-%m-%d.log"
-    handler.extMatch = re.compile(r"^\d{4}-\d{2}-\d{2}.log$")
-    handler.setFormatter(logging.Formatter(
+    log_handler.suffix = "%Y-%m-%d.log"
+    log_handler.extMatch = re.compile(r"^\d{4}-\d{2}-\d{2}.log$")
+    log_handler.setFormatter(logging.Formatter(
         f"%(asctime)s - (%(name)s:%(lineno)d) [{_log_file_name}] [%(levelname)s] : %(message)s"
     ))
 
@@ -106,5 +103,4 @@ def initialize_logging(log_target_directory: str, logback_path: str):
         root_logger.removeHandler(handler)
         handler.close()
 
-    root_logger.addHandler(handler)
-    _initialized = True
+    root_logger.addHandler(log_handler)
