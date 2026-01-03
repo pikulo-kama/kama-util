@@ -1,6 +1,6 @@
 ![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Code Coverage](https://codecov.io/gh/pikulo-kama/kama-util/branch/master/graph/badge.svg)
-# <img src="assets/kama-logo.svg" alt="Kama Logo" width="auto" height="100"/> kama-util (kutil)
+# <img src=".idea/icon.svg" alt="Kama Logo" width="auto" height="100"/> kama-util (kutil)
 
 A comprehensive Python utility library built with a **src-layout** to provide clean, modular tools for common development challenges. 
 This library streamlines tasks ranging from localized date formatting to advanced unit testing mocks.
