@@ -16,6 +16,7 @@ def safe_patch(patch_method, path, *args, **kw):
     except AttributeError:
         return MagicMock()
 
+
 def safe_patch_fixture(mocker):
     """
     Provides a functional wrapper for performing safe patches using the mocker fixture.
@@ -25,6 +26,7 @@ def safe_patch_fixture(mocker):
     """
     return lambda path, *args, **kw: safe_patch(mocker.patch, path, *args, **kw)
 
+
 def safe_module_patch_fixture(get_module_patch):
     """
     Provides a functional wrapper for performing safe patches on module-level targets.
@@ -33,6 +35,7 @@ def safe_module_patch_fixture(get_module_patch):
     factory to resolve paths relative to the source module.
     """
     return lambda path, *args, **kw: safe_patch(get_module_patch, path, *args, **kw)
+
 
 def module_path_fixture(request):
     """
@@ -61,6 +64,7 @@ def module_path_fixture(request):
         return separator.join(path_list)
 
     return get_module_path
+
 
 def get_module_patch_fixture(mocker, module_path):
     """

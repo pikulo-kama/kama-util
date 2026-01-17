@@ -85,7 +85,7 @@ class TestLogger:
 
 
     def test_initialize_logging_first_call(self, module_patch, _logger_module, _logging_mock, _file_handler_mock,
-                                           path_join_mock, read_file_mock):
+                                           path_exists_mock, path_join_mock, read_file_mock):
         """
         Tests that logging is initialized correctly on the first call, setting up the root logger.
         """
@@ -117,24 +117,6 @@ class TestLogger:
         _file_handler_mock.return_value.setFormatter.assert_called()
 
         _logging_mock.getLogger.return_value.addHandler.assert_called_with(_file_handler_mock.return_value)
-
-        # 4. Check global state update
-        assert _logger_module._initialized is True
-
-
-    def test_initialize_logging_second_call_ignored(self, module_patch, _file_handler_mock, _logger_module):
-        """
-        Tests that logging initialization is skipped after the first time.
-        """
-
-        # First, manually set _initialized=True
-        _logger_module._initialized = True
-
-        # Execute again
-        _logger_module.initialize_logging("target", "path")
-
-        # Assertions: Should not call the handler constructor
-        _file_handler_mock.assert_not_called()
 
     def test_initialize_logging_removes_handlers(self, mocker: MockerFixture, _logger_module, _logging_mock,
                                                  read_file_mock, _file_handler_mock):

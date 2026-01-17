@@ -8,3 +8,7 @@ def module_patch(get_module_patch):
 @pytest.fixture
 def path_join_mock(module_patch):
     return module_patch("os.path.join", side_effect=lambda *args: "/".join(args))
+
+@pytest.fixture
+def path_exists_mock(module_patch):
+    return module_patch("os.path.exists")

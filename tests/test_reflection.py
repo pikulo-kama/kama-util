@@ -1,4 +1,3 @@
-import sys
 import pytest
 
 
@@ -42,7 +41,7 @@ class TestReflectionUtil:
         return module_patch("importlib")
 
     @pytest.fixture
-    def _package_mock(self, mocker, module_patch, _importlib_mock):
+    def _package_mock(self, mocker, module_patch, _importlib_mock, _find_spec_mock):
         """
         Sets up the necessary mocks for sys, pkgutil, importlib, and inspect
         to simulate iterating over a package containing two modules.
@@ -52,6 +51,7 @@ class TestReflectionUtil:
 
         mock_package_name = "mock_package"
 
+        # Define the members for our mock modules
         mock_module_a_members = [
             (SubClassA.__name__, SubClassA),
             (NonSubClass.__name__, NonSubClass)
@@ -62,26 +62,29 @@ class TestReflectionUtil:
             (MockBaseClass.__name__, MockBaseClass)
         ]
 
-        mock_module_a = mocker.MagicMock()
-        mock_module_b = mocker.MagicMock()
+        module_patch("pkgutil.walk_packages", return_value=[
+            (None, "module_a", False),
+            (None, "module_b", False),
+        ])
 
-        mock_package = mocker.MagicMock()
-        mock_package.__path__ = ["/mock/path"]
-        sys.modules[mock_package_name] = mock_package
+        _importlib_mock.import_module.side_effect = {
+            f"{mock_package_name}.module_a": mocker.MagicMock(),
+            f"{mock_package_name}.module_b": mocker.MagicMock()
+        }.get
 
-        mock_inspect = module_patch("inspect")
-        pkgutil_mock = module_patch("pkgutil")
-
-        pkgutil_mock.iter_modules.return_value = [
-            (mocker.MagicMock(), "module_a", False),
-            (mocker.MagicMock(), "module_b", False),
-        ]
-
-        _importlib_mock.import_module.side_effect = [mock_module_a, mock_module_b]
-        mock_inspect.getmembers.side_effect = [mock_module_a_members, mock_module_b_members]
+        module_patch("inspect.getmembers", side_effect=[
+            mock_module_a_members,
+            mock_module_b_members
+        ])
 
         yield mock_package_name
 
+    @pytest.fixture
+    def _find_spec_mock(self, _importlib_mock):
+        find_spec_mock = _importlib_mock.util.find_spec
+        find_spec_mock.return_value.submodule_search_locations = ["/mock/path"]
+
+        return find_spec_mock
 
     def test_get_members_finds_all_subclasses(self, _package_mock):
         """
@@ -109,6 +112,18 @@ class TestReflectionUtil:
         # Assert that the number of returned members is correct
         assert len(found_members) == 2
 
+    def test_should_not_process_if_no_spec(self, _find_spec_mock, _package_mock):
+        from kutil.reflection import get_members
+
+        _find_spec_mock.return_value.submodule_search_locations = None
+
+        found_members = set(get_members(_package_mock, MockBaseClass))
+        assert len(found_members) == 0
+
+        _find_spec_mock.return_value = None
+
+        found_members = set(get_members(_package_mock, MockBaseClass))
+        assert len(found_members) == 0
 
     def test_get_members_excludes_base_class(self, _package_mock):
         """
