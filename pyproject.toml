@@ -21,11 +21,11 @@ test = [
 ]
 
 [project.entry-points."pytest11"]
-kama_util_fixtures = "kutil.pytest_plugin"
+kama_util_fixtures = "kutil.pytest_fixtures"
 
 [tool.coverage.run]
 source = ["kutil"]
-omit = ["src/kutil/pytest_plugin.py"]
+omit = ["src/kutil/pytest_fixtures/**"]
 disable_warnings = ["module-not-measured"]
 
 [tool.pytest.ini_options]

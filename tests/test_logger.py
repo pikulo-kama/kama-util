@@ -30,10 +30,6 @@ class TestLogger:
         return module_patch("TimedRotatingFileHandler")
 
     @pytest.fixture
-    def read_file_mock(self, module_patch):
-        return module_patch("read_file")
-
-    @pytest.fixture
     def _logger_module(self, _setup_module):
         """
         Resets the module's global state (_logback, _initialized) and root logger
