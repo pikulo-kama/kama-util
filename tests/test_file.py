@@ -176,7 +176,7 @@ class TestFileUtil:
         assert actual_content.strip() == expected_content.strip()
         assert actual_data == data
 
-    def test_should_delete_file(self, module_patch, tmp_path, path_exists_mock, remove_mock):
+    def test_should_delete_file(self, tmp_path, path_exists_mock, remove_mock):
 
         from kutil.file import delete_file
 

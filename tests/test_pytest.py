@@ -1,4 +1,6 @@
 from unittest.mock import MagicMock
+
+import pytest
 from pytest_mock import MockerFixture
 
 
@@ -54,7 +56,7 @@ class TestPytest:
         assert result == get_module_patch_mock.return_value
         get_module_patch_mock.assert_called_once_with("test", 1, 2, a="b", c="d")
 
-    def test_module_path_resolution(self):
+    def test_module_path_resolution(self, mocker: MockerFixture):
         """
         Verifies the string transformation from 'tests.sub.test_file' to 'root.sub.file'.
         """
@@ -62,36 +64,59 @@ class TestPytest:
         from kutil.pytest import module_path_fixture
 
         # Mocking the pytest FixtureRequest object
-        mock_request = MagicMock()
+        mock_request = mocker.MagicMock()
         mock_request.module.__name__ = "utils.test_date"
 
+        pytest_config_mock = mocker.MagicMock()
+        get_plugin_mock = pytest_config_mock.pluginmanager.get_plugin
+        get_plugin_mock.return_value.cov_controller.cov.config.source = ["kutil"]
+
         # Get the inner function
-        get_path_fn = module_path_fixture(mock_request)
+        module_path = module_path_fixture(mock_request, pytest_config_mock)
 
         # 1. Standard test file
-        assert get_path_fn("kutil") == "kutil.utils.date"
+        get_plugin_mock.assert_called_once_with("_cov")
+        assert module_path == "kutil.utils.date"
 
         # 2. Test file for __init__.py (test_init.py)
         mock_request.module.__name__ = "test_init"
-        get_path_fn_init = module_path_fixture(mock_request)
-        assert get_path_fn_init("kutil") == "kutil"
+        module_path_init = module_path_fixture(mock_request, pytest_config_mock)
+        assert module_path_init == "kutil"
+
+    def test_module_path_without_cov_plugin(self, mocker: MockerFixture):
+
+        from kutil.pytest import module_path_fixture
+
+        # Mocking the pytest FixtureRequest object
+        mock_request = mocker.MagicMock()
+        mock_request.module.__name__ = "utils.test_date"
+
+        pytest_config_mock = mocker.MagicMock()
+        get_plugin_mock = pytest_config_mock.pluginmanager.get_plugin
+        get_plugin_mock.return_value.cov_controller.cov = None
+
+        with pytest.raises(RuntimeError):
+            module_path_fixture(mock_request, pytest_config_mock)
+
+        get_plugin_mock.return_value.cov_controller = None
+
+        with pytest.raises(RuntimeError):
+            module_path_fixture(mock_request, pytest_config_mock)
+
+        get_plugin_mock.return_value = None
+
+        with pytest.raises(RuntimeError):
+            module_path_fixture(mock_request, pytest_config_mock)
 
     def test_get_module_patch_integration(self, mocker: MockerFixture):
         """
         Verifies that the factory correctly combines the path and calls mocker.patch.
         """
 
-        from kutil.pytest import get_module_patch_fixture
+        from kutil.pytest import module_patch_fixture
 
         mock_mocker = mocker.MagicMock()
-        # Mock the module_path to return a fixed string
-        mock_path_resolver = lambda root: f"{root}.process"
-
-        # Get the factory
-        factory = get_module_patch_fixture(mock_mocker, mock_path_resolver)
-
-        # Create a patcher for 'kutil'
-        patcher = factory("kutil")
+        patcher = module_patch_fixture(mock_mocker, "kutil.process")
 
         # Perform the patch
         patcher("os.getpid", return_value=123)

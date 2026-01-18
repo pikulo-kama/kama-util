@@ -17,7 +17,7 @@ def safe_patch(mocker: MockerFixture):
 
 
 @pytest.fixture
-def safe_module_patch(get_module_patch):
+def safe_module_patch(module_patch):
     """
     Fixture that provides a safe patching mechanism scoped to the source module.
 
@@ -26,11 +26,24 @@ def safe_module_patch(get_module_patch):
     """
 
     from kutil.pytest import safe_module_patch_fixture
-    return safe_module_patch_fixture(get_module_patch)
+    return safe_module_patch_fixture(module_patch)
 
 
 @pytest.fixture
-def module_path(request: FixtureRequest):
+def module_patch(mocker: MockerFixture, module_path):
+    """
+    Fixture that provides a factory for creating module-level mocks.
+
+    Automates the resolution of mock paths by transforming the test
+    module's namespace into the corresponding source namespace.
+    """
+
+    from kutil.pytest import module_patch_fixture
+    return module_patch_fixture(mocker, module_path)
+
+
+@pytest.fixture
+def module_path(request: FixtureRequest, pytestconfig):
     """
     Fixture that resolves the source module path for the current test file.
 
@@ -39,17 +52,4 @@ def module_path(request: FixtureRequest):
     """
 
     from kutil.pytest import module_path_fixture
-    return module_path_fixture(request)
-
-
-@pytest.fixture
-def get_module_patch(mocker: MockerFixture, module_path):
-    """
-    Fixture that provides a factory for creating module-level mocks.
-
-    Automates the resolution of mock paths by transforming the test
-    module's namespace into the corresponding source namespace.
-    """
-
-    from kutil.pytest import get_module_patch_fixture
-    return get_module_patch_fixture(mocker, module_path)
+    return module_path_fixture(request, pytestconfig)

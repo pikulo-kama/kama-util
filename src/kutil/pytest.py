@@ -27,17 +27,17 @@ def safe_patch_fixture(mocker):
     return lambda path, *args, **kw: safe_patch(mocker.patch, path, *args, **kw)
 
 
-def safe_module_patch_fixture(get_module_patch):
+def safe_module_patch_fixture(module_patch):
     """
     Provides a functional wrapper for performing safe patches on module-level targets.
 
     Similar to safe_patch_fixture, but utilizes the get_module_patch
     factory to resolve paths relative to the source module.
     """
-    return lambda path, *args, **kw: safe_patch(get_module_patch, path, *args, **kw)
+    return lambda path, *args, **kw: safe_patch(module_patch, path, *args, **kw)
 
 
-def module_path_fixture(request):
+def module_path_fixture(request, pytestconfig):
     """
     Resolves the source module path corresponding to the current test module.
 
@@ -46,27 +46,30 @@ def module_path_fixture(request):
     case of package initialization files.
     """
 
-    def get_module_path(root_package_path: str):
-        separator = "."
+    plugin = pytestconfig.pluginmanager.get_plugin("_cov")
 
-        path_list = str(request.module.__name__).split(separator)
-        test_name = path_list.pop()
-        source_file_name = test_name.replace("test_", "")
+    if not plugin or not plugin.cov_controller or not plugin.cov_controller.cov:
+        raise RuntimeError("Coverage controller is not configured.")
 
-        # Replace base package.
-        path_list.insert(0, root_package_path)
+    base_package = plugin.cov_controller.cov.config.source[0]
+    separator = "."
 
-        # File called 'test_init' should test __init__.py file of module,
-        # so we shouldn't add it to path.
-        if source_file_name != "init":
-            path_list.append(source_file_name)
+    path_list = str(request.module.__name__).split(separator)
+    test_name = path_list.pop()
+    source_file_name = test_name.replace("test_", "")
 
-        return separator.join(path_list)
+    # Replace base package.
+    path_list.insert(0, base_package)
 
-    return get_module_path
+    # File called 'test_init' should test __init__.py file of module,
+    # so we shouldn't add it to path.
+    if source_file_name != "init":
+        path_list.append(source_file_name)
+
+    return separator.join(path_list)
 
 
-def get_module_patch_fixture(mocker, module_path):
+def module_patch_fixture(mocker, module_path):
     """
     Used to resolve module level mocks.
 
@@ -81,12 +84,4 @@ def get_module_patch_fixture(mocker, module_path):
     Returns a factory function that generates patchers scoped to the
     current test's corresponding source module.
     """
-
-    def _get_patch(root_package_path: str):
-        def _patch(path, *args, **kw):
-            mock_path = f"{module_path(root_package_path)}.{path}"
-            return mocker.patch(mock_path, *args, **kw)
-
-        return _patch
-
-    return _get_patch
+    return lambda path, *args, **kw: mocker.patch(f"{module_path}.{path}", *args, **kw)

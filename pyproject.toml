@@ -24,8 +24,8 @@ test = [
 kama_util_fixtures = "kutil.pytest_plugin"
 
 [tool.coverage.run]
-omit = ["src/kutil/pytest_plugin.py"]
 source = ["kutil"]
+omit = ["src/kutil/pytest_plugin.py"]
 disable_warnings = ["module-not-measured"]
 
 [tool.pytest.ini_options]
