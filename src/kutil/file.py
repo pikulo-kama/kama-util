@@ -5,6 +5,22 @@ import shutil
 from typing import Any
 
 
+def list_directory(directory: str):
+    """
+    Used to safely list contents of directory.
+    If directory doesn't exist then empty list
+    would be returned.
+
+    :param directory: name of the directory to list files for
+    :return: list of files under directory.
+    """
+
+    if not os.path.exists(directory):
+        return []
+
+    return os.listdir(directory)
+
+
 def cleanup_directory(directory: str):
     """
     Used to delete all contents of directory.
