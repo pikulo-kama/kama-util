@@ -18,17 +18,20 @@ def get_members(package: str, clazz: type):
     spec = importlib.util.find_spec(package)  # noqa
 
     if not spec or not spec.submodule_search_locations:
-        return []
+        return
 
-    for _, module_name, _ in pkgutil.walk_packages(spec.submodule_search_locations):
-        module = importlib.import_module(f"{package}.{module_name}")
+    for _, module_name, is_package in pkgutil.walk_packages(
+        spec.submodule_search_locations,
+        prefix=f"{package}."
+    ):
+        if is_package:
+            continue
+
+        module = importlib.import_module(module_name)
 
         for member_name, member in inspect.getmembers(module, inspect.isclass):
-
             if issubclass(member, clazz) and member is not clazz:
                 yield member_name, member
-
-    return []
 
 
 def get_methods(target, name_filter: Callable[[str], bool]):
